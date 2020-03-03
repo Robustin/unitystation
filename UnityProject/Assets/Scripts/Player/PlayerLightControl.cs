@@ -14,6 +14,7 @@ public class PlayerLightData
 	//public Sprite Sprite;
 	public EnumSpriteLightData EnumSprite;
 	public float Size = 12;
+	public ActionData ActionData;
 }
 
 public enum EnumSpriteLightData
@@ -24,7 +25,7 @@ public enum EnumSpriteLightData
 }
 
 [RequireComponent(typeof(Pickupable))]
-public class PlayerLightControl : NetworkBehaviour, IServerInventoryMove
+public class PlayerLightControl : NetworkBehaviour, IServerInventoryMove, IClientInventoryMove, IActionGUI
 {
 	public LightEmissionPlayer LightEmission;
 
@@ -45,7 +46,9 @@ public class PlayerLightControl : NetworkBehaviour, IServerInventoryMove
 	//public Sprite Sprite;
 	public EnumSpriteLightData EnumSprite;
 	public float Size;
-
+	[SerializeField]
+	private ActionData actionData;
+	public ActionData ActionData => actionData;
 	public PlayerLightData PlayerLightData;
 
 	void Start()
@@ -56,6 +59,7 @@ public class PlayerLightControl : NetworkBehaviour, IServerInventoryMove
 			Colour = Colour,
 			EnumSprite = EnumSprite,
 			Size = Size,
+			ActionData = ActionData,
 		};
 	}
 
@@ -75,8 +79,17 @@ public class PlayerLightControl : NetworkBehaviour, IServerInventoryMove
 			{
 				LightEmission = info.ToPlayer.GetComponent<LightEmissionPlayer>();
 				LightEmission.AddLight(PlayerLightData);
+				var pna = PlayerManager.LocalPlayerScript.playerNetworkActions;
+				var showAlert = pna.GetActiveHandItem() == gameObject ||
+							pna.GetOffHandItem() == gameObject;
+				UIActionManager.Toggle(this, showAlert);
 			}
 		}
+	}
+
+	public void OnInventoryMoveClient(ClientInventoryMove info)
+	{
+		//UIActionManager.Toggle(this, showAlert);
 	}
 
 	public void Toggle(bool on, float intensity = -1)
@@ -108,4 +121,14 @@ public class PlayerLightControl : NetworkBehaviour, IServerInventoryMove
 		}
 	}
 
+	public void CallActionClient()
+	{
+		bool NewLightState = false;
+		if(LightEmission = null)
+		{
+			NewLightState = true;
+		}
+		Toggle(NewLightState, Intensity);
+	}
 }
+
